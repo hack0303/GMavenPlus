@@ -236,7 +236,51 @@ public abstract class AbstractGroovyMojo extends AbstractMojo {
             classWrangler = new ClassWrangler(classpath, getLog());
         } else {
             getLog().info("Using plugin classloader, includes GMavenPlus classpath.");
-            classWrangler = new ClassWrangler(Thread.currentThread().getContextClassLoader(), getLog());
+            classWrangler = new ClassWrangler(getClassLoader(), getLog());
         }
     }
+
+    // from https://www.javaworld.com/article/2077344/find-a-way-out-of-the-classloader-maze.html
+    private ClassLoader getClassLoader() {
+        final ClassLoader callerLoader = getClass().getClassLoader();
+        final ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
+
+        ClassLoader result;
+
+        if (isChild(contextLoader, callerLoader)) {
+            getLog().debug("Using caller classloader.");
+            result = callerLoader;
+        } else {
+            getLog().debug("Using context classloader.");
+            result = contextLoader;
+        }
+        final ClassLoader systemLoader = ClassLoader.getSystemClassLoader();
+
+        // precaution for when deployed as a bootstrap or extension class:
+        if (isChild(result, systemLoader)) {
+            getLog().debug("Using system classloader.");
+            result = systemLoader;
+        }
+
+        return result;
+    }
+
+    private boolean isChild(final ClassLoader loader1, ClassLoader loader2) {
+        if (loader1 == loader2) {
+            return true;
+        }
+        if (loader2 == null) {
+            return false;
+        }
+        if (loader1 == null) {
+            return true;
+        }
+        for ( ; loader2 != null; loader2 = loader2.getParent()) {
+            if (loader2 == loader1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
