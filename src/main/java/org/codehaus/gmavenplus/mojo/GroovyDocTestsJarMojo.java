@@ -96,7 +96,7 @@ public class GroovyDocTestsJarMojo extends GroovyDocTestsMojo {
     /**
      * The classifier for the test GroovyDoc jar.
      */
-    @Parameter(defaultValue = "test-groovydoc", required = true)
+    @Parameter(defaultValue = "test-groovydoc")
     private String testClassifier;
 
     /**
@@ -118,10 +118,10 @@ public class GroovyDocTestsJarMojo extends GroovyDocTestsMojo {
         try {
             File outputFile = generateArchive(testGroovyDocOutputDirectory, finalName + "-" + testClassifier + ".jar");
 
-            if (!attach) {
-                getLog().info("NOT adding GroovyDoc to attached artifacts list.");
+            if (attach) {
+                projectHelper.attachArtifact(project, "javadoc", testClassifier, outputFile);
             } else {
-                projectHelper.attachArtifact(project, "groovydoc", testClassifier, outputFile);
+                getLog().info("Not adding test GroovyDoc jar to attached artifacts list.");
             }
         } catch (ArchiverException e) {
             throw new MojoExecutionException("ArchiverException: Error while creating archive", e);
